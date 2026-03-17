@@ -6,36 +6,95 @@ const App = () => {
   const [display, setDisplay] = useState("0")
   const [firstNum, setFirstNum] = useState("")
   const [operator, setOperator] = useState("")
-  let [justCalculated, setJustCalculated] = useState(false)
+  const [justCalculated, setJustCalculated] = useState(false)
 
   const handleNumberPress = (num:string) => {
+    if (num === "." && display.includes(".")){
+      return
+    }
     if (justCalculated){
       setDisplay(num)
       setJustCalculated(false)
+      return
     }
     else
       if(display === '0')
         setDisplay(num)     // create new number after zero
       else
         setDisplay(display+num)    // create multidigit number
-    console.log("before display", display);
-    console.log("pressed number", num);
   }
 
-  const handleOperatorPress = (op:string) => {   
-    setFirstNum(display);     // firstNum is the number user pressed before an operator
-    setDisplay("0")   // This will ensure display start fresh after operator
-    setOperator(op)
+  const calculate = (a:string, b:string, op:string): number => {
+    let result: number = 0;
+    switch (op) {
+      case '+': 
+        result = Number(a) + Number(b)
+        break;
+      case '-': 
+        result = Number(a) - Number(b)
+        break;
+      case '*': 
+       result = Number(a) * Number(b)
+        break;
+      case '/': 
+        if(Number(b) === 0){
+          return NaN
+        }
+       result = Number(a) / Number(b)
+        break;
+      case '%': 
+       result = Number(a) % Number(b)
+        break;
+    
+      default:
+        result = 0;
+    }
+    return result
+  }
+
+  const handleOperatorPress = (op:string) => {
+    if(firstNum && operator) {
+      let result = calculate(firstNum, display, operator)
+      setFirstNum(result.toString())
+      setDisplay("0")
+      setOperator(op)
+      setJustCalculated(false)
+    } 
+    else{
+      setFirstNum(display);     
+      setDisplay("0")   
+      setOperator(op)
+      setJustCalculated(false)
+    } 
   }
 
   const handleEquals = () => {
-    console.log("firstNum", firstNum);
-    console.log("operator", operator);
-    console.log("display", display);
-    let total = Number(firstNum) + Number(display)
-    console.log("total:", total);
-    setDisplay(total.toString())
+    if(!operator){
+      setDisplay(display)
+      setJustCalculated(true)
+      return
+    }
+
+    let result = calculate(firstNum, display, operator)
+    if(isNaN(result) || !isFinite(result)){
+      setDisplay("Error")
+    }else{
+      setDisplay(result.toString())
+    }
+    setFirstNum("")
+    setOperator("")
     setJustCalculated(true)
+  }
+
+  const handleClearButton = () => {
+    setDisplay("0")
+    setFirstNum("")
+    setOperator("")
+    setJustCalculated(false)
+  }
+
+  const handleClearCurrentEntry = () => {
+    setDisplay("0")
   }
 
   return (
@@ -108,18 +167,15 @@ const App = () => {
         </View>
 
         <View style={styles.row}>
-          <TouchableOpacity onPress={() => handleNumberPress("C")} style={styles.btnContainer}>
+          <TouchableOpacity onPress={() => handleClearButton()} style={styles.btnContainer}>
             <Text style={styles.btn}> C </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleNumberPress("CE")} style={styles.btnContainer}>
+          <TouchableOpacity onPress={() => handleClearCurrentEntry()} style={styles.btnContainer}>
             <Text style={styles.btn}> CE </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleNumberPress("%")} style={styles.btnContainer}>
+          <TouchableOpacity onPress={() => handleOperatorPress("%")} style={styles.btnContainer}>
             <Text style={styles.btn}> % </Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity onPress={() => handleNumberPress("AC")} style={styles.btnContainer}>
-            <Text style={styles.btn}> AC </Text>
-          </TouchableOpacity> */}
         </View>
         
       </View>
